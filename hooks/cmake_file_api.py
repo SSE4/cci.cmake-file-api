@@ -59,6 +59,7 @@ def pre_build(output, conanfile, **kwargs):
         create_query(build_dir)
 
 def run(reply_dir, build_type, conanfile_name):
+    message = ''
     for filename in os.listdir(reply_dir):
         if fnmatch.fnmatch(filename, "codemodel-v2-*.json"):
             codemodel = json.loads(tools.load(os.path.join(reply_dir, filename)))
@@ -85,8 +86,8 @@ def run(reply_dir, build_type, conanfile_name):
                             if project['name'] != conanfile_name:
                                 name = project['name']
                                 output.warn('project name "%s" is different from conanfile name "%s"' % (name, conanfile_name))
-                                output.warn('consider adding the following code to the "package_info" method:')
-                                output.warn(cmake_template.format(name=name))
+
+                                message += cmake_template.format(name=name)
                     for target in configuration['targets']:
                         if 'name' not in target:
                             output.warn("target doesn't have a name")
@@ -132,8 +133,10 @@ def run(reply_dir, build_type, conanfile_name):
                                         link = nameOnDisk[3:-2]
                                     if name != conanfile_name:
                                         output.warn('target name "%s" is different from conanfile name "%s"' % (name, conanfile_name))
-                                        output.warn('consider adding the following code to the "package_info" method:')
-                                        output.warn(component_template.format(name=name, component=name, link=link, requires=requires))
+                                        message += component_template.format(name=name, component=name, link=link, requires=requires)
+                    if message:
+                        output.warn('consider adding the following code to the "package_info" method:')
+                        output.warn(message)
                     break
 
 def post_build(output, conanfile, **kwargs):
