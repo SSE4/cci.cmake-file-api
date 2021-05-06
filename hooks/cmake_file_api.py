@@ -128,8 +128,8 @@ def run(reply_dir, build_type, conanfile_name):
                                         link = nameOnDisk[:-4]
                                     if fnmatch.fnmatch(nameOnDisk, '*.dll'):
                                         link = nameOnDisk[:-4]
-                                    if fnmatch.fnmatch(nameOnDisk, '*.a'):
-                                        link = nameOnDisk[:-2]
+                                    if fnmatch.fnmatch(nameOnDisk, 'lib*.a'):
+                                        link = nameOnDisk[3:-2]
                                     if name != conanfile_name:
                                         output.warn('target name "%s" is different from conanfile name "%s"' % (name, conanfile_name))
                                         output.warn('consider adding the following code to the "package_info" method:')
