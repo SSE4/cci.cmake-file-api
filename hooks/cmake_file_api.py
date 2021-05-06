@@ -62,9 +62,24 @@ def run(reply_dir, build_type, conanfile_name):
     for filename in os.listdir(reply_dir):
         if fnmatch.fnmatch(filename, "codemodel-v2-*.json"):
             codemodel = json.loads(tools.load(os.path.join(reply_dir, filename)))
+            if 'configurations' not in codemodel:
+                output.warn("codemodel doesn't have configurations")
+                return
             for configuration in codemodel['configurations']:
+                if 'name' not in configuration:
+                    output.warn("configuration doesn't have a name")
+                    continue
                 if configuration['name'] == build_type:
+                    if 'projects' not in configuration:
+                        output.warn("configuration %s doesn't have projects" % configuration['name'])
+                        continue
+                    if 'targets' not in configuration:
+                        output.warn("configuration %s doesn't have targets" % configuration['name'])
+                        continue
                     for project in configuration['projects']:
+                        if 'name' not in project:
+                            output.warn("project doesn't have a name")
+                            continue
                         if project['name'] != 'cmake_wrapper':
                             output.info('found CMake project: "%s"' % project['name'])
                             if project['name'] != conanfile_name:
@@ -73,15 +88,30 @@ def run(reply_dir, build_type, conanfile_name):
                                 output.warn('consider adding the following code to the "package_info" method:')
                                 output.warn(cmake_template.format(name=name))
                     for target in configuration['targets']:
+                        if 'name' not in target:
+                            output.warn("target doesn't have a name")
+                            continue
                         if target['name'] not in SKIP_TARGETS:
                             target_js = json.loads(tools.load(os.path.join(reply_dir, target['jsonFile'])))
                             if 'install' in target_js:
+                                if 'name' not in target_js:
+                                    output.warn("target.js doesn't have a name")
+                                    continue
+                                if 'nameOnDisk' not in target_js:
+                                    output.warn("target.js doesn't have a nameOnDisk")
+                                    continue
+                                if 'type' not in target_js:
+                                    output.warn("target.js doesn't have a type")
+                                    continue
                                 name = target_js['name']
                                 nameOnDisk = target_js['nameOnDisk']
                                 type = target_js['type']
-                                dependencies = target_js['dependencies']
+                                dependencies = target_js.get('dependencies', [])
                                 requires = []
                                 for dependency in dependencies:
+                                    if 'id' not in dependency:
+                                        output.warn("dependency doesn't have an id")
+                                        continue
                                     id = dependency["id"]
                                     dependency_name, _ = id.split("::@")
                                     if dependency_name not in SKIP_TARGETS:
