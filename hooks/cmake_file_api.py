@@ -21,7 +21,7 @@ cmake_template = textwrap.dedent("""
         self.cpp_info.names["cmake_find_package_multi"] = "{name}"
 """)
 
-requires_template = 'self.cpp_info.components["{component}"].requires = ["{requires}"]'
+requires_template = 'self.cpp_info.components["{component}"].requires = [{requires}]'
 
 def find_dir_containing_file(conanfile, filename):
     for root, _, filenames in os.walk(conanfile.build_folder):
