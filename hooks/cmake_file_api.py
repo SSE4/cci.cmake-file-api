@@ -3,6 +3,7 @@
 import fnmatch
 import json
 import os
+import sys
 import textwrap
 from conans import tools
 
@@ -57,40 +58,18 @@ def pre_build(output, conanfile, **kwargs):
     for build_dir in [cmake_dir, os.path.join(cmake_dir, "build_folder")]:
         create_query(build_dir)
 
-def post_build(output, conanfile, **kwargs):
-    if conanfile.name == 'test_package' or conanfile.name is None:
-        # not interested in test_package...
-        return
-    cmake_build_dir = find_cmake_build_dir(conanfile)
-    if not cmake_build_dir:
-        # probably, doesn't use a CMake build system
-        return
-
-    output.info('found CMake build directory: "%s"' % cmake_build_dir)
-
-    reply_dir = os.path.join(api_dir(cmake_build_dir), 'reply')
-
-    if not os.path.isdir(reply_dir):
-        create_query(cmake_build_dir)
-
-        with tools.chdir(cmake_build_dir):
-            # re-run CMake
-            conanfile.run('cmake .')
-
-    assert os.path.isdir(reply_dir)
-
+def run(reply_dir, build_type, conanfile_name):
     for filename in os.listdir(reply_dir):
         if fnmatch.fnmatch(filename, "codemodel-v2-*.json"):
             codemodel = json.loads(tools.load(os.path.join(reply_dir, filename)))
-            build_type = conanfile.settings.get_safe('build_type') or 'Debug'
             for configuration in codemodel['configurations']:
                 if configuration['name'] == build_type:
                     for project in configuration['projects']:
                         if project['name'] != 'cmake_wrapper':
                             output.info('found CMake project: "%s"' % project['name'])
-                            if project['name'] != conanfile.name:
+                            if project['name'] != conanfile_name:
                                 name = project['name']
-                                output.warn('project name "%s" is different from conanfile name "%s"' % (name, conanfile.name))
+                                output.warn('project name "%s" is different from conanfile name "%s"' % (name, conanfile_name))
                                 output.warn('consider adding the following code to the "package_info" method:')
                                 output.warn(cmake_template.format(name=name))
                     for target in configuration['targets']:
@@ -119,8 +98,43 @@ def post_build(output, conanfile, **kwargs):
                                         link = nameOnDisk[:-4]
                                     if fnmatch.fnmatch(nameOnDisk, '*.dll'):
                                         link = nameOnDisk[:-4]
-                                    if name != conanfile.name:
-                                        output.warn('target name "%s" is different from conanfile name "%s"' % (name, conanfile.name))
+                                    if name != conanfile_name:
+                                        output.warn('target name "%s" is different from conanfile name "%s"' % (name, conanfile_name))
                                         output.warn('consider adding the following code to the "package_info" method:')
                                         output.warn(component_template.format(name=name, component=name, link=link, requires=requires))
                     break
+
+def post_build(output, conanfile, **kwargs):
+    if conanfile.name == 'test_package' or conanfile.name is None:
+        # not interested in test_package...
+        return
+    cmake_build_dir = find_cmake_build_dir(conanfile)
+    if not cmake_build_dir:
+        # probably, doesn't use a CMake build system
+        return
+
+    output.info('found CMake build directory: "%s"' % cmake_build_dir)
+
+    reply_dir = os.path.join(api_dir(cmake_build_dir), 'reply')
+
+    if not os.path.isdir(reply_dir):
+        create_query(cmake_build_dir)
+
+        with tools.chdir(cmake_build_dir):
+            # re-run CMake
+            conanfile.run('cmake .')
+
+    assert os.path.isdir(reply_dir)
+    build_type = conanfile.settings.get_safe('build_type') or 'Debug'
+
+    run(reply_dir, build_type, conanfile.name)
+
+class SimpleOutput(object):
+    def warn(self, msg):
+        print(msg)
+    def info(self, msg):
+        print(msg)
+
+if __name__ == '__main__':
+    output = SimpleOutput()
+    run(sys.argv[1], "Release", "test")
