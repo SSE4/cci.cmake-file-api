@@ -58,7 +58,7 @@ def pre_build(output, conanfile, **kwargs):
     for build_dir in [cmake_dir, os.path.join(cmake_dir, "build_folder")]:
         create_query(build_dir)
 
-def run(reply_dir, build_type, conanfile_name):
+def run(output, reply_dir, build_type, conanfile_name):
     message = ''
     for filename in os.listdir(reply_dir):
         if fnmatch.fnmatch(filename, "codemodel-v2-*.json"):
@@ -162,7 +162,7 @@ def post_build(output, conanfile, **kwargs):
     assert os.path.isdir(reply_dir)
     build_type = conanfile.settings.get_safe('build_type') or 'Debug'
 
-    run(reply_dir, build_type, conanfile.name)
+    run(output, reply_dir, build_type, conanfile.name)
 
 class SimpleOutput(object):
     def warn(self, msg):
@@ -172,4 +172,4 @@ class SimpleOutput(object):
 
 if __name__ == '__main__':
     output = SimpleOutput()
-    run(sys.argv[1], "Release", "test")
+    run(output, sys.argv[1], "Release", "test")
