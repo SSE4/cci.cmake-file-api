@@ -34,3 +34,10 @@ self.cpp_info.components["zip"].libs = ["zip"]
 ```
 
 the code suggested by the hook's output could be copied into the [package_info](https://docs.conan.io/en/latest/reference/conanfile/methods.html#package-info) method.
+
+## TODO
+
+there are several things that are not supported right now, but very nice to have...
+
+- system_libs (seems to be not exposed by file API?)
+- 3rd-party dependencies like boost (seems to be not exposed by file API?)
