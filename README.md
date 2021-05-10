@@ -41,3 +41,4 @@ there are several things that are not supported right now, but very nice to have
 
 - system_libs (seems to be not exposed by file API?)
 - 3rd-party dependencies like boost (seems to be not exposed by file API?)
+- executable targets
